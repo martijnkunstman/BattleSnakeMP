@@ -8,13 +8,13 @@ const io = new Server(server);
 
 const PORT = process.env.PORT || 3000;
 
-const worldSize = 400;
+const worldSize = 100;
 let players = {};
-let food = Array.from({ length: 500 }, () => ({
+let food = Array.from({ length: 1000 }, () => ({
   x: Math.floor(Math.random() * worldSize),
   y: Math.floor(Math.random() * worldSize),
 }));
-let debris = Array.from({ length: 500 }, () => ({
+let debris = Array.from({ length: 100 }, () => ({
   x: Math.floor(Math.random() * worldSize),
   y: Math.floor(Math.random() * worldSize),
 }));
@@ -82,11 +82,38 @@ setInterval(() => {
 
     p.snake.unshift({ x: p.position.x, y: p.position.y });
 
+    // Self-collision
     for (let i = 1; i < p.snake.length; i++) {
       if (p.snake[i].x === p.position.x && p.snake[i].y === p.position.y) {
         p.snake = p.snake.slice(0, i);
         p.snakeLength = i;
         break;
+      }
+    }
+
+    // Collision with other players
+    for (let otherId in players) {
+      if (otherId === id) continue; // Skip self
+
+      const otherPlayer = players[otherId];
+      for (let i = 0; i < otherPlayer.snake.length; i++) {
+        const segment = otherPlayer.snake[i];
+
+        if (segment.x === p.position.x && segment.y === p.position.y) {
+          // The player being hit gets their tail cut
+          const cutIndex = i;
+
+          if (cutIndex !== -1) {
+            otherPlayer.snake = otherPlayer.snake.slice(0, cutIndex);
+            otherPlayer.snakeLength = cutIndex;
+          } else {
+            otherPlayer.snakeLength = Math.max(1, otherPlayer.snakeLength - 1);
+            while (otherPlayer.snake.length > otherPlayer.snakeLength) {
+              otherPlayer.snake.pop();
+            }
+          }
+          break;
+        }
       }
     }
 
@@ -105,4 +132,6 @@ setInterval(() => {
 }, 100);
 
 app.use(express.static("public"));
-server.listen(PORT, () => console.log(`Server running on http://localhost:${PORT}`));
+server.listen(PORT, () =>
+  console.log(`Server running on http://localhost:${PORT}`)
+);
