@@ -290,11 +290,7 @@
             ctx.fillRect(px, py, size, size);
           }
         }
-
-        for (let d of debris) drawDot(d.x, d.y, 2, "red");
-        for (let s of snake) drawDot(s.x, s.y, 2, "blue");
-        for (let f of food) drawDot(f.x, f.y, 3, "green");
-
+        for (let s of snake) drawDot(s.x, s.y, 2, "white");
         ctx.strokeStyle = "white";
         ctx.lineWidth = 1;
         ctx.strokeRect(

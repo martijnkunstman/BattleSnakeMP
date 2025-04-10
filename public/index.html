@@ -1,13 +1,92 @@
 <!DOCTYPE html>
-<html>
-  <head>
-    <meta name="viewport" content="width=device-width,initial-scale=1.0" />
-    <title>BattleSnakeMP</title>
-    <link rel="stylesheet" href="style.css" />
-  </head>
-  <body>
-    <div id="title">BattleSnakeMP</div>
-    <script src="/socket.io/socket.io.js"></script>
-    <script src="app.js"></script>
-  </body>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>Multiplayer Snake</title>
+  <style>
+    body { margin: 0; overflow: hidden; }
+    canvas { display: block; }
+  </style>
+  <script src="/socket.io/socket.io.js"></script>
+</head>
+<body>
+  <script>
+    const socket = io();
+    const canvas = document.createElement("canvas");
+    canvas.width = window.innerWidth;
+    canvas.height = window.innerHeight;
+    document.body.appendChild(canvas);
+    const ctx = canvas.getContext("2d");
+
+    const cellSize = 10;
+    const worldSize = 400;
+    const viewWidth = Math.floor(canvas.width / cellSize);
+    const viewHeight = Math.floor(canvas.height / cellSize);
+    let localPlayerId = null;
+    let gameState = { players: {}, food: [], debris: [] };
+
+    function wrapPosition(pos, size) {
+      return (pos + size) % size;
+    }
+
+    function wrappedDistance(a, b, size) {
+      let dist = a - b;
+      if (dist > size / 2) dist -= size;
+      if (dist < -size / 2) dist += size;
+      return dist;
+    }
+
+    function drawWrapped(obj, color, camera) {
+      ctx.fillStyle = color;
+      const dx = wrappedDistance(obj.x, camera.x + viewWidth / 2, worldSize);
+      const dy = wrappedDistance(obj.y, camera.y + viewHeight / 2, worldSize);
+      const x = (viewWidth / 2 + dx) * cellSize;
+      const y = (viewHeight / 2 + dy) * cellSize;
+      ctx.fillRect(x, y, cellSize, cellSize);
+    }
+
+    document.addEventListener("keydown", function (e) {
+      let newDir = 0;
+      if ((e.code === "ArrowUp" || e.code === "KeyW")) newDir = 3;
+      if ((e.code === "ArrowDown" || e.code === "KeyS")) newDir = 4;
+      if ((e.code === "ArrowLeft" || e.code === "KeyA")) newDir = 1;
+      if ((e.code === "ArrowRight" || e.code === "KeyD")) newDir = 2;
+      if (newDir !== 0) socket.emit("direction", newDir);
+    });
+
+    socket.on("connect", () => {
+      localPlayerId = socket.id;
+    });
+
+    socket.on("state", (state) => {
+      gameState = state;
+    });
+
+    function gameLoop() {
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+      const player = gameState.players[localPlayerId];
+      if (!player) return requestAnimationFrame(gameLoop);
+
+      const camera = {
+        x: player.position.x - Math.floor(viewWidth / 2),
+        y: player.position.y - Math.floor(viewHeight / 2),
+      };
+
+      for (let id in gameState.players) {
+        const p = gameState.players[id];
+        for (let s of p.snake) drawWrapped(s, id === localPlayerId ? "blue" : "gray", camera);
+      }
+
+      for (let f of gameState.food) drawWrapped(f, "green", camera);
+      for (let d of gameState.debris) drawWrapped(d, "red", camera);
+
+      ctx.fillStyle = "black";
+      ctx.font = "20px Arial";
+      ctx.fillText("Score: " + player.score, 10, 20);
+      requestAnimationFrame(gameLoop);
+    }
+
+    gameLoop();
+  </script>
+</body>
 </html>
