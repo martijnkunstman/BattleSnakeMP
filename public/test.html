@@ -49,7 +49,7 @@
         y: Math.floor(worldSize / 2),
       };
 
-      let foodCount = 100;
+      let foodCount = 500;
       let food = [];
       for (let i = 0; i < foodCount; i++) {
         food.push({
@@ -59,7 +59,7 @@
       }
 
       let debris = [];
-      for (let i = 0; i < 300; i++) {
+      for (let i = 0; i < 500; i++) {
         debris.push({
           x: Math.floor(Math.random() * worldSize),
           y: Math.floor(Math.random() * worldSize),
@@ -145,13 +145,21 @@
 
         if (Math.abs(dx) > softEdge) {
           camera.x = wrapPosition(
-            lerp(camera.x, camera.x + dx - Math.sign(dx) * softEdge, followStrength),
+            lerp(
+              camera.x,
+              camera.x + dx - Math.sign(dx) * softEdge,
+              followStrength
+            ),
             worldSize
           );
         }
         if (Math.abs(dy) > softEdge) {
           camera.y = wrapPosition(
-            lerp(camera.y, camera.y + dy - Math.sign(dy) * softEdge, followStrength),
+            lerp(
+              camera.y,
+              camera.y + dy - Math.sign(dy) * softEdge,
+              followStrength
+            ),
             worldSize
           );
         }
@@ -201,8 +209,20 @@
           }
         }
 
-        // Snake body
+        // Snake body with self-intersection handling
         snake.unshift({ x: position.x, y: position.y });
+
+        // Check for intersection with the body (excluding head)
+        for (let i = 1; i < snake.length; i++) {
+          if (snake[i].x === position.x && snake[i].y === position.y) {
+            // Cut tail from intersection point
+            snake = snake.slice(0, i);
+            snakeLength = i;
+            break;
+          }
+        }
+
+        // Ensure tail isn't longer than current length
         while (snake.length > snakeLength) {
           snake.pop();
         }
@@ -225,11 +245,20 @@
       document.addEventListener("keydown", function (e) {
         if ((e.code === "ArrowUp" || e.code === "KeyW") && prevDirection !== 4)
           direction = 3;
-        if ((e.code === "ArrowDown" || e.code === "KeyS") && prevDirection !== 3)
+        if (
+          (e.code === "ArrowDown" || e.code === "KeyS") &&
+          prevDirection !== 3
+        )
           direction = 4;
-        if ((e.code === "ArrowLeft" || e.code === "KeyA") && prevDirection !== 2)
+        if (
+          (e.code === "ArrowLeft" || e.code === "KeyA") &&
+          prevDirection !== 2
+        )
           direction = 1;
-        if ((e.code === "ArrowRight" || e.code === "KeyD") && prevDirection !== 1)
+        if (
+          (e.code === "ArrowRight" || e.code === "KeyD") &&
+          prevDirection !== 1
+        )
           direction = 2;
       });
 
