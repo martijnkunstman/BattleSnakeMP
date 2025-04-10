@@ -122,9 +122,9 @@
         }
 
         // Draw game objects
-        for (let s of snake) drawWrapped(s, "green");
-        for (let d of debris) drawWrapped(d, "brown");
-        for (let f of food) drawWrapped(f, "red");
+        for (let s of snake) drawWrapped(s, "blue");
+        for (let d of debris) drawWrapped(d, "red");
+        for (let f of food) drawWrapped(f, "green");
 
         // Score
         ctx.fillStyle = "black";
@@ -291,9 +291,9 @@
           }
         }
 
-        for (let d of debris) drawDot(d.x, d.y, 2, "brown");
-        for (let s of snake) drawDot(s.x, s.y, 2, "lime");
-        for (let f of food) drawDot(f.x, f.y, 3, "red");
+        for (let d of debris) drawDot(d.x, d.y, 2, "red");
+        for (let s of snake) drawDot(s.x, s.y, 2, "blue");
+        for (let f of food) drawDot(f.x, f.y, 3, "green");
 
         ctx.strokeStyle = "white";
         ctx.lineWidth = 1;
