@@ -122,25 +122,43 @@ function gameLoop() {
   const camCenterY = camera.y + viewHeight / 2;
   let dx = wrappedDistance(player.position.x, camCenterX, worldSize);
   let dy = wrappedDistance(player.position.y, camCenterY, worldSize);
-  const followStrength = 0.02;
+
+
+
+  // const followStrength = 0.02;
+  // const softEdge = Math.min(viewWidth, viewHeight) * 0.2;
+
+  const maxFollowStrength = 0.1;
+  const minFollowStrength = 0.01;
   const softEdge = Math.min(viewWidth, viewHeight) * 0.2;
 
+  function computeFollowStrength(distance) {
+    const excess = Math.max(0, Math.abs(distance) - softEdge);
+    const maxDist = Math.min(viewWidth, viewHeight) / 2;
+    const t = Math.min(excess / (maxDist - softEdge), 1);
+    return minFollowStrength + (maxFollowStrength - minFollowStrength) * t;
+  }
+
+  
+
   if (Math.abs(dx) > softEdge) {
+    const strengthX = computeFollowStrength(dx);
     camera.x = wrapPosition(
       lerp(
         camera.x,
         camera.x + dx - Math.sign(dx) * softEdge,
-        followStrength
+        strengthX
       ),
       worldSize
     );
   }
   if (Math.abs(dy) > softEdge) {
+    const strengthY = computeFollowStrength(dy);
     camera.y = wrapPosition(
       lerp(
         camera.y,
         camera.y + dy - Math.sign(dy) * softEdge,
-        followStrength
+        strengthY
       ),
       worldSize
     );
@@ -149,16 +167,13 @@ function gameLoop() {
   // Draw everything
   for (let id in gameState.players) {
     const p = gameState.players[id];
+    drawWrapped(p.position, id === localPlayerId ? "blue" : "gray");
     for (let s of p.snake)
       drawWrapped(s, id === localPlayerId ? "blue" : "gray");
   }
 
   for (let f of gameState.food) drawWrapped(f, "green");
   for (let d of gameState.debris) drawWrapped(d, "red");
-
-  ctx.fillStyle = "black";
-  ctx.font = "20px Arial";
-  ctx.fillText("Score: " + player.score, 10, 20);
 
   drawMinimap(player);
 
