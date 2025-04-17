@@ -8,16 +8,13 @@ const io = new Server(server);
 
 const PORT = process.env.PORT || 3000;
 
-const worldSize = 200;
+const worldSize = 300;
 let players = {};
 let food = Array.from({ length: 1000 }, () => ({
   x: Math.floor(Math.random() * worldSize),
   y: Math.floor(Math.random() * worldSize),
 }));
-let debris = Array.from({ length: 100 }, () => ({
-  x: Math.floor(Math.random() * worldSize),
-  y: Math.floor(Math.random() * worldSize),
-}));
+
 
 function wrap(val) {
   return (val + worldSize) % worldSize;
@@ -31,6 +28,7 @@ io.on("connection", (socket) => {
   players[id] = {
     id,
     direction: 0,
+    name: "---",
     prevDirection: 0,
     snake: [{ x: startX, y: startY }],
     position: { x: startX, y: startY },
@@ -40,6 +38,10 @@ io.on("connection", (socket) => {
   socket.on("disconnect", () => {
     delete players[id];
   });
+
+  socket.on("name", (name) => {
+    players[id].name = name;
+  } );
 
   socket.on("direction", (dir) => {
     if (dir === players[id].prevDirection) return; // Prevent immediate repeat
@@ -98,20 +100,6 @@ function gameLoop() {
           }
         }
 
-        // Check debris collision
-        for (let i = debris.length - 1; i >= 0; i--) {
-          if (p.position.x === debris[i].x && p.position.y === debris[i].y) {
-
-            if (p.snake.length > 1) {
-              p.snake.pop();
-            }
-            debris[i] = {
-              x: Math.floor(Math.random() * worldSize),
-              y: Math.floor(Math.random() * worldSize),
-            };
-          }
-        }
-
         // Update snake
         p.snake.unshift({ x: p.position.x, y: p.position.y });
 
@@ -152,8 +140,7 @@ function gameLoop() {
 
     io.emit("state", {
       players,
-      food,
-      debris,
+      food
     });
 
 

@@ -5,19 +5,34 @@ canvas.height = window.innerHeight;
 document.body.appendChild(canvas);
 const ctx = canvas.getContext("2d");
 
-
-const worldSize = 200;
+const worldSize = 300;
 const cellSize = Math.max(canvas.width, canvas.height) / 100;
 const viewWidth = Math.floor(canvas.width / cellSize);
 const viewHeight = Math.floor(canvas.height / cellSize);
 
-
-
 let localPlayerId = null;
-let gameState = { players: {}, food: [], debris: [] };
+let gameState = { players: {}, food: [] };
 
 let camera = { x: 0, y: 0 };
 let direction = 0;
+
+//create text input to set name
+const nameInput = document.createElement("input");
+nameInput.type = "text";
+nameInput.placeholder = "Enter your name";
+nameInput.style.position = "absolute";
+nameInput.style.top = "10px";
+nameInput.style.left = "10px";
+nameInput.style.zIndex = "1000";
+document.body.appendChild(nameInput);
+nameInput.addEventListener("change", () => {
+  const name = nameInput.value.trim();
+  if (name) {
+    socket.emit("name", name);
+    gameState.players[localPlayerId].name = name;
+  }
+}
+);
 
 function wrapPosition(pos, size) {
   return (pos + size) % size;
@@ -32,6 +47,17 @@ function wrappedDistance(a, b, size) {
 
 function lerp(a, b, t) {
   return a + (b - a) * t;
+}
+
+function drawName(obj, name, color) {
+  const dx = wrappedDistance(obj.x, camera.x + viewWidth / 2, worldSize);
+  const dy = wrappedDistance(obj.y, camera.y + viewHeight / 2, worldSize);
+  const x = (viewWidth / 2 + dx) * cellSize;
+  const y = (viewHeight / 2 + dy) * cellSize;
+  ctx.fillStyle = color;
+  ctx.font = "16px Arial";
+  ctx.fillText(name, x + cellSize / 2, y - 5);
+  ctx.fillStyle = "black";
 }
 
 function drawWrapped(obj, color) {
@@ -139,7 +165,7 @@ function gameLoop() {
     return minFollowStrength + (maxFollowStrength - minFollowStrength) * t;
   }
 
-  
+
 
   if (Math.abs(dx) > softEdge) {
     const strengthX = computeFollowStrength(dx);
@@ -167,13 +193,13 @@ function gameLoop() {
   // Draw everything
   for (let id in gameState.players) {
     const p = gameState.players[id];
+    drawName(p.position, p.name, id === localPlayerId ? "blue" : "gray");
     drawWrapped(p.position, id === localPlayerId ? "blue" : "gray");
     for (let s of p.snake)
       drawWrapped(s, id === localPlayerId ? "blue" : "gray");
   }
 
   for (let f of gameState.food) drawWrapped(f, "green");
-  for (let d of gameState.debris) drawWrapped(d, "red");
 
   drawMinimap(player);
 
